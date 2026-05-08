@@ -1,0 +1,14 @@
+venv/
+__pycache__/
+*.pyc
+.env
+uzbekpdf.db
+temp_uploads/
+*.pdf
+*.jpg
+*.jpeg
+*.png
+*.docx
+*.xlsx
+*.pptx
+.DS_Store

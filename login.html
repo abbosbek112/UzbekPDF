@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tizimga kirish - UzbekPDF</title>
+    <meta name="description" content="UzbekPDF tizimiga kirish. Xavfsiz va tezkor PDF vositalaridan foydalanishni boshlang.">
+    <meta name="keywords" content="uzbekpdf login, tizimga kirish, uzbekpdf ro'yxatdan o'tish">
+    <meta property="og:title" content="Tizimga kirish - UzbekPDF">
+    <meta property="og:description" content="UzbekPDF profilingizga kiring va xavfsiz PDF asboblardan foydalaning.">
+    <meta property="og:type" content="website">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background: #fdfdfe; 
+            margin: 0;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 25px 50px -12px rgba(229, 50, 45, 0.08);
+        }
+        .animate-blob {
+            animation: blob 7s infinite;
+        }
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+        
+        .input-focus:focus {
+            box-shadow: 0 0 0 4px rgba(229, 50, 45, 0.1);
+            border-color: #e5322d;
+        }
+        .btn-premium {
+            background: #e5322d;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-premium:hover {
+            background: #c22b27;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(229, 50, 45, 0.3);
+        }
+        .btn-google {
+            background: white;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        .btn-google:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 relative">
+    
+    <!-- Animated Blobs Background -->
+    <div class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-red-100 rounded-full mix-blend-multiply filter blur-[80px] opacity-40 animate-blob"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-100 rounded-full mix-blend-multiply filter blur-[80px] opacity-40 animate-blob animation-delay-2000"></div>
+    <div class="absolute top-[20%] right-[10%] w-[300px] h-[300px] bg-purple-100 rounded-full mix-blend-multiply filter blur-[80px] opacity-30 animate-blob animation-delay-4000"></div>
+
+    <div class="max-w-[440px] w-full glass-panel rounded-[2.5rem] p-10 relative z-10 border border-white/60">
+        
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <div class="flex justify-center mb-6">
+                <div class="w-16 h-16 bg-[#e5322d] text-white rounded-2xl flex items-center justify-center shadow-2xl shadow-red-200 rotate-3 transform hover:rotate-0 transition-transform duration-300 cursor-pointer" onclick="location.href='/'">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                </div>
+            </div>
+            <h1 class="text-4xl font-black text-slate-900 tracking-tighter mb-2">UzbekPDF</h1>
+            <p class="text-slate-500 font-medium tracking-tight" id="subtitle">Smart PDF vositalari olamiga xush kelibsiz</p>
+        </div>
+
+        <div id="alert" class="hidden mb-6 p-4 rounded-2xl text-sm font-semibold text-center transform transition-all scale-95 opacity-0"></div>
+
+        <!-- Auth Method Selector -->
+        <div id="authChoices" class="space-y-4">
+            <a href="/api/auth/google/login" class="btn-google w-full text-slate-700 font-bold py-4 px-6 rounded-2xl flex items-center justify-center space-x-4 transition-all duration-300 group">
+                <svg class="w-6 h-6 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                <span>Google orqali davom etish</span>
+            </a>
+
+            <div class="relative flex items-center py-4">
+                <div class="flex-grow border-t border-slate-100"></div>
+                <span class="flex-shrink-0 mx-4 text-slate-300 text-[10px] font-black uppercase tracking-[0.2em]">yoki</span>
+                <div class="flex-grow border-t border-slate-100"></div>
+            </div>
+
+            <button onclick="toggleView('login')" class="w-full bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-4 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2 border border-slate-100">
+                <i data-lucide="mail" class="w-5 h-5"></i>
+                <span>Elektron pochta orqali</span>
+            </button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="space-y-6 hidden animate-fadeIn">
+            <div class="space-y-2">
+                <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Elektron pochta (Email)</label>
+                <div class="relative">
+                    <i data-lucide="mail" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                    <input type="email" id="loginEmail" required class="input-focus w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none transition-all font-medium text-slate-700" placeholder="pochta@manzil.uz">
+                </div>
+            </div>
+            <div class="space-y-2">
+                <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Parol</label>
+                <div class="relative">
+                    <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                    <input type="password" id="loginPassword" required class="input-focus w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none transition-all font-medium text-slate-700" placeholder="••••••••">
+                </div>
+            </div>
+            <button type="submit" id="loginBtn" class="btn-premium w-full text-white font-bold py-4 px-6 rounded-2xl flex items-center justify-center shadow-lg">
+                <span>Tizimga kirish</span>
+            </button>
+            <div class="flex flex-col space-y-4 pt-2 text-center">
+                <button type="button" onclick="toggleView('register')" class="text-sm font-bold text-[#e5322d] hover:text-[#c22b27] transition-colors">
+                    Hali ro'yxatdan o'tmadingizmi? <span class="underline">Akkaunt yaratish</span>
+                </button>
+                <button type="button" onclick="toggleView('choices')" class="text-xs font-bold text-slate-400 hover:text-slate-600 flex items-center justify-center uppercase tracking-widest">
+                    <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Ortga qaytish
+                </button>
+            </div>
+        </form>
+
+        <!-- Register Form -->
+        <form id="registerForm" class="space-y-4 hidden animate-fadeIn">
+            <div class="space-y-1">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">To'liq ismingiz</label>
+                <div class="relative">
+                    <i data-lucide="user" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                    <input type="text" id="registerFullName" required class="input-focus w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none transition-all font-medium text-slate-700 text-sm" placeholder="Ism Familiya">
+                </div>
+            </div>
+            <div class="space-y-1">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Elektron pochta</label>
+                <div class="relative">
+                    <i data-lucide="mail" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                    <input type="email" id="registerEmail" required class="input-focus w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none transition-all font-medium text-slate-700 text-sm" placeholder="pochta@manzil.uz">
+                </div>
+            </div>
+            <div class="space-y-1">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Parol</label>
+                <div class="relative">
+                    <i data-lucide="key-round" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                    <input type="password" id="registerPassword" required class="input-focus w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none transition-all font-medium text-slate-700 text-sm" placeholder="••••••••">
+                </div>
+            </div>
+            <div class="space-y-1">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Parolni tasdiqlang</label>
+                <div class="relative">
+                    <i data-lucide="shield-check" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                    <input type="password" id="registerConfirmPassword" required class="input-focus w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none transition-all font-medium text-slate-700 text-sm" placeholder="••••••••">
+                </div>
+            </div>
+            <button type="submit" id="registerBtn" class="btn-premium w-full text-white font-bold py-4 px-6 rounded-2xl flex items-center justify-center shadow-lg mt-2">
+                <span>Ro'yxatdan o'tish</span>
+            </button>
+            <div class="flex flex-col space-y-4 pt-2 text-center">
+                <button type="button" onclick="toggleView('login')" class="text-sm font-bold text-[#e5322d] hover:text-[#c22b27] transition-colors">
+                    Akkauntingiz bormi? <span class="underline">Kirish</span>
+                </button>
+                <button type="button" onclick="toggleView('choices')" class="text-xs font-bold text-slate-400 hover:text-slate-600 flex items-center justify-center uppercase tracking-widest">
+                    <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Ortga qaytish
+                </button>
+            </div>
+        </form>
+
+    </div>
+
+    <!-- Footer Links -->
+    <div class="absolute bottom-8 left-0 w-full text-center text-slate-400 text-xs font-bold uppercase tracking-[0.3em] z-10">
+        &copy; 2024 UzbekPDF &bull; Premium Quality
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        function showAlert(message, type = 'error') {
+            const alert = document.getElementById('alert');
+            if(!alert) return;
+            alert.className = `mb-6 p-4 rounded-2xl text-sm font-bold text-center transition-all duration-300 transform scale-100 opacity-100 ${type === 'error' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}`;
+            alert.textContent = message;
+            alert.classList.remove('hidden');
+            setTimeout(() => {
+                alert.classList.add('opacity-0');
+                alert.classList.add('scale-95');
+                setTimeout(() => alert.classList.add('hidden'), 300);
+            }, 5000);
+        }
+
+        function toggleView(view) {
+            const choices = document.getElementById('authChoices');
+            const login = document.getElementById('loginForm');
+            const register = document.getElementById('registerForm');
+            const subtitle = document.getElementById('subtitle');
+            const alert = document.getElementById('alert');
+            
+            if(alert) alert.classList.add('hidden');
+            
+            // Reset visibility
+            [choices, login, register].forEach(el => {
+                if(el) el.classList.add('hidden');
+            });
+            
+            if (view === 'register') {
+                if(register) register.classList.remove('hidden');
+                if(subtitle) subtitle.textContent = "Yangi akkaunt yaratish";
+            } else if (view === 'login') {
+                if(login) login.classList.remove('hidden');
+                if(subtitle) subtitle.textContent = "Tizimga xavfsiz kirish";
+            } else {
+                if(choices) choices.classList.remove('hidden');
+                if(subtitle) subtitle.textContent = "Smart PDF vositalari olamiga xush kelibsiz";
+            }
+            lucide.createIcons();
+        }
+
+        // Handle Login
+        const loginForm = document.getElementById('loginForm');
+        if(loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('loginBtn');
+                const originalContent = btn.innerHTML;
+                btn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+                btn.disabled = true;
+
+                const formData = new FormData();
+                formData.append('username', document.getElementById('loginEmail').value);
+                formData.append('password', document.getElementById('loginPassword').value);
+
+                try {
+                    const response = await fetch('/api/login', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        localStorage.setItem('token', data.access_token);
+                        localStorage.setItem('username', data.username);
+                        localStorage.removeItem('avatar');
+                        const nextUrl = sessionStorage.getItem('next_url') || '/';
+                        sessionStorage.removeItem('next_url');
+                        window.location.href = nextUrl;
+                    } else {
+                        showAlert(data.detail || "Login yoki parol xato");
+                    }
+                } catch (err) {
+                    showAlert("Server bilan bog'lanishda xatolik");
+                } finally {
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        // Handle Register
+        const registerForm = document.getElementById('registerForm');
+        if(registerForm) {
+            registerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const password = document.getElementById('registerPassword').value;
+                const confirm = document.getElementById('registerConfirmPassword').value;
+                
+                if (password !== confirm) {
+                    showAlert("Parollar mos kelmadi!");
+                    return;
+                }
+
+                const btn = document.getElementById('registerBtn');
+                const originalContent = btn.innerHTML;
+                btn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+                btn.disabled = true;
+
+                const payload = {
+                    email: document.getElementById('registerEmail').value,
+                    full_name: document.getElementById('registerFullName').value,
+                    password: password
+                };
+
+                try {
+                    const response = await fetch('/api/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        showAlert("Muvaffaqiyatli! Endi tizimga kiring", "success");
+                        setTimeout(() => {
+                            toggleView('login');
+                            document.getElementById('loginEmail').value = payload.email;
+                        }, 2000);
+                    } else {
+                        showAlert(data.detail || "Ro'yxatdan o'tishda xatolik");
+                    }
+                } catch (err) {
+                    showAlert("Server bilan bog'lanishda xatolik");
+                } finally {
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        // Auto-redirect
+        if (localStorage.getItem('token')) {
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

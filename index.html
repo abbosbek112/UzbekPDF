@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UzbekPDF - O'zbekistonning eng yaxshi PDF asboblari</title>
+    <meta name="description" content="PDF fayllarni onlayn, bepul va xavfsiz tahrirlash, qisqartirish, birlashtirish va aylantirish. O'zbekistondagi eng tezkor PDF platformasi.">
+    <meta name="keywords" content="pdf uzbek, pdf ni word qilish, pdf kichraytirish, pdf birlashtirish, rasm pdf qilish, pdf uzbekistan, pdf tahrirlash, bepul pdf">
+    <meta property="og:title" content="UzbekPDF - Smart PDF vositalari">
+    <meta property="og:description" content="PDF fayllarni oson tahrirlang. Word, Excel va rasmlarni PDF'ga tez va bepul o'tkazing.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://uzbekpdf.uz/">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="icon" href="data:,">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Client-Side Conversion Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/libs/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .tool-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .tool-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .tool-card-disabled { opacity: 0.7; cursor: not-allowed; }
+        .tool-card-disabled:hover { transform: none; box-shadow: none; }
+        .dropzone-active { background-color: #fef2f2; border-color: #ef4444; }
+        .btn-red { background: linear-gradient(135deg, #e5322d 0%, #c12723 100%); color: white; border: none; }
+        .btn-red:hover { background: linear-gradient(135deg, #d12c28 0%, #b1231f 100%); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(229, 50, 45, 0.3); }
+        
+        .nav-glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        
+        .nav-link {
+            position: relative;
+            transition: color 0.2s;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background-color: #e5322d;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Alert Toast */
+        #toast { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform: translate(-50%, -100px); opacity: 0; pointer-events: none; }
+        #toast.show { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
+
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <nav class="nav-glass sticky top-0 z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center group cursor-pointer" onclick="goHome()">
+                    <div class="w-10 h-10 bg-[#e5322d] text-white rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                    </div>
+
+                    <div class="ml-3">
+                        <span class="block font-black text-2xl tracking-tighter text-slate-900 leading-none">UzbekPDF</span>
+                        <span class="text-[10px] font-bold text-slate-400 tracking-[0.2em] uppercase">Smart Tools</span>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-10 text-[13px] font-bold text-slate-500 tracking-wide">
+                    <a href="/about" class="nav-link hover:text-slate-900 transition-colors uppercase">Biz haqimizda</a>
+                    <a href="/contact" class="nav-link hover:text-slate-900 transition-colors uppercase">Biz bilan bog'lanish</a>
+                    <a href="/premium" class="nav-link hover:text-[#e5322d] transition-colors uppercase font-extrabold text-red-600">Premium olish</a>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <div id="user-info" class="hidden flex items-center space-x-3 px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all cursor-pointer" onclick="location.href='/profile'">
+                        <img id="nav-avatar" src="" alt="Avatar" class="w-8 h-8 rounded-full hidden border-2 border-white shadow-sm">
+                        <span id="nav-username" class="text-sm font-bold text-slate-700"></span>
+                    </div>
+                    <button id="logout-btn" class="hidden text-xs bg-white hover:bg-slate-50 text-slate-500 py-2.5 px-5 rounded-xl font-bold border border-slate-200 transition-all  active:scale-95">Chiqish</button>
+                    <button id="login-nav-btn" class="btn-red text-sm py-2.5 px-6 rounded-xl font-bold transition-all shadow-lg active:scale-95">Kirish</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3">
+        <i data-lucide="info" class="w-5 h-5 text-blue-400"></i>
+        <span id="toast-msg" class="font-medium">Xabar</span>
+    </div>
+
+    <!-- MAIN VIEW: GRID -->
+    <main id="home-view" class="flex-grow">
+        <!-- Hero Section -->
+        <section class="relative overflow-hidden pt-20 pb-24 bg-white">
+            <!-- Animated decorative elements -->
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full">
+                <div class="absolute top-[-10%] right-[10%] w-64 h-64 bg-red-50 rounded-full blur-3xl opacity-60"></div>
+                <div class="absolute bottom-[10%] left-[5%] w-72 h-72 bg-blue-50 rounded-full blur-3xl opacity-60"></div>
+            </div>
+
+            <div class="max-w-7xl mx-auto px-4 relative z-10 text-center">
+        
+                <h1 class="text-5xl md:text-7xl font-black text-slate-900 mb-8 tracking-tighter leading-tight" id="greeting">
+                    PDF bilan ishlash <br/> endi <span class="text-[#e5322d]">osonroq</span>
+                </h1>
+                <p class="text-xl text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed mb-12">
+                    Barcha PDF asboblari bitta joyda. Tez, bepul va xavfsiz. UzbekPDF bilan hujjatlaringizni professional darajada boshqaring.
+                </p>
+
+                <!-- Stats -->
+                <div class="flex flex-wrap justify-center gap-12 md:gap-24 opacity-70">
+                    <div class="text-center">
+                        <div class="text-2xl font-black text-slate-900">20+</div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Asboblar</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-black text-slate-900">100%</div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Xavfsiz</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-black text-slate-900">Limit yo'q</div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Premium</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div class="flex items-center justify-between mb-12">
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight">Ommabop asboblar</h2>
+                <div class="h-px flex-grow bg-slate-100 mx-8"></div>
+                <div class="flex space-x-2">
+                    <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                    <div class="w-2 h-2 rounded-full bg-slate-200"></div>
+                    <div class="w-2 h-2 rounded-full bg-slate-200"></div>
+                </div>
+            </div>
+            <div id="tools-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                <!-- JS will inject cards here -->
+            </div>
+        </div>
+    </main>
+
+
+    <!-- TOOL VIEW: UPLOAD -->
+    <main id="tool-view" class="flex-grow hidden bg-slate-50 relative overflow-hidden">
+        <!-- Background accents -->
+        <div class="absolute top-0 right-0 w-1/2 h-full bg-red-50/30 -skew-x-12 translate-x-1/4"></div>
+
+        <div class="max-w-4xl mx-auto px-4 py-20 relative z-10 text-center">
+            <button onclick="goHome()" class="mb-8 inline-flex items-center text-sm font-bold text-slate-400 hover:text-slate-900 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Asosiyga qaytish
+            </button>
+            <h1 id="tool-title" class="text-5xl font-black text-slate-900 mb-4 tracking-tight">Tool Title</h1>
+            <p id="tool-desc" class="text-xl text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed mb-16">Tool description goes here.</p>
+
+            <!-- Dropzone -->
+            <div id="dropzone" class="bg-white rounded-[40px] p-16 shadow-2xl shadow-slate-200 border-2 border-dashed border-slate-200 hover:border-red-400 transition-all duration-500 cursor-pointer min-h-[450px] flex flex-col items-center justify-center relative group">
+                <input type="file" id="file-input" class="hidden">
+                
+                <div id="upload-content" class="space-y-8 z-10 relative w-full flex flex-col items-center">
+                    <div class="w-24 h-24 bg-red-50 text-[#e5322d] rounded-3xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-red-100">
+                        <i data-lucide="upload-cloud" class="w-12 h-12"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <button id="browse-btn" class="btn-red text-xl font-black py-5 px-10 rounded-2xl shadow-xl transition-all active:scale-95">
+                            <span id="btn-text">Fayllarni tanlang</span>
+                        </button>
+                        <p class="text-slate-400 font-bold text-xs uppercase tracking-widest mt-4">yoki fayllarni shu yerga tashlang</p>
+                    </div>
+                </div>
+
+                <!-- Password Input (Only for Protect & Unlock PDF) -->
+                <div id="password-container" class="hidden w-full max-w-sm mt-8 p-8 bg-slate-50 rounded-3xl border border-slate-100">
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Xavfsizlik paroli</label>
+                    <input type="password" id="pdf-password" placeholder="••••••••" class="w-full px-6 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-[#e5322d] outline-none font-bold text-lg shadow-sm transition-all">
+                </div>
+
+                <!-- Rotation Select (Only for Rotate PDF) -->
+                <div id="rotate-container" class="hidden w-full max-w-sm mt-8 p-8 bg-slate-50 rounded-3xl border border-slate-100 text-left">
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Burish burchagi</label>
+                    <div class="relative">
+                        <select id="pdf-angle" class="w-full px-6 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-[#e5322d] outline-none font-bold text-slate-700 appearance-none shadow-sm transition-all">
+                            <option value="90">O'ngga 90°</option>
+                            <option value="270">Chapga 90°</option>
+                            <option value="180">Teskari 180°</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+
+                <!-- Watermark Text Input -->
+                <div id="watermark-container" class="hidden w-full max-w-sm mt-8 space-y-2 text-left">
+                    <label class="block text-sm font-semibold text-slate-700 ml-1">Qanday yozuv tushiramiz?</label>
+                    <input type="text" id="pdf-watermark-text" placeholder="Masalan: MAXFIY yoki NUSXA" class="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-[#e5322d] outline-none font-medium">
+                </div>
+
+                <!-- File Preview -->
+                <div id="file-preview" class="hidden w-full flex flex-col items-center mt-8">
+                    <div class="w-20 h-20 bg-red-50 text-[#e5322d] rounded-xl flex items-center justify-center mb-4">
+                        <i data-lucide="file-check-2" class="w-10 h-10"></i>
+                    </div>
+                    <p id="selected-files-text" class="text-lg font-semibold text-slate-700 mb-8 text-center max-w-md truncate">filename.pdf</p>
+                    
+                    <div class="flex space-x-4">
+                        <button onclick="resetFiles(event)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-3 rounded-lg font-bold transition flex items-center">
+                            <i data-lucide="trash-2" class="w-5 h-5 mr-2"></i> O'chirish
+                        </button>
+                        <button id="action-btn" class="btn-red px-8 py-3 rounded-lg font-bold text-lg transition flex items-center shadow-lg shadow-red-200">
+                            Boshlash <i data-lucide="arrow-right" class="w-5 h-5 ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progress State -->
+                <div id="progress-state" class="hidden w-full max-w-md mx-auto flex flex-col items-center mt-8">
+                    <i data-lucide="loader-2" class="w-12 h-12 text-[#e5322d] animate-spin mb-4"></i>
+                    <p id="progress-status" class="text-xl font-bold text-slate-700 mb-2">Ishlanmoqda...</p>
+                    <p class="text-slate-500">Iltimos, kutib turing.</p>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-slate-900 pt-20 pb-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center mb-6">
+                        <div class="w-8 h-8 bg-[#e5322d] text-white rounded-lg flex items-center justify-center">
+                            <i data-lucide="file-text" class="w-5 h-5"></i>
+                        </div>
+                        <span class="ml-3 font-black text-xl tracking-tighter text-white">UzbekPDF</span>
+                    </div>
+                    <p class="text-slate-400 text-sm font-medium leading-relaxed max-w-sm">
+                        O'zbekistondagi eng tezkor va xavfsiz PDF platformasi. Hujjatlaringizni tahrirlash, aylantirish va himoya qilish endi yanada oson.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold text-sm uppercase tracking-widest mb-6">Mahsulot</h4>
+                    <ul class="space-y-4 text-sm font-medium text-slate-500">
+                        <li><a href="#" class="hover:text-white transition-colors">Barcha asboblar</a></li>
+                        <li><a href="/premium" class="hover:text-white transition-colors text-red-500 font-bold">Premium</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Narxlar</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold text-sm uppercase tracking-widest mb-6">Yordam</h4>
+                    <ul class="space-y-4 text-sm font-medium text-slate-500">
+                        <li><a href="#" class="hover:text-white transition-colors">Biz haqimizda</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Bog'lanish</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Maxfiylik</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-slate-600 text-xs font-bold uppercase tracking-widest mb-4 md:mb-0">&copy; 2026 UzbekPDF. BARCHA HUQUQLAR HIMOYALANGAN.</p>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-slate-600 hover:text-white transition-colors"><i data-lucide="instagram" class="w-5 h-5"></i></a>
+                    <a href="#" class="text-slate-600 hover:text-white transition-colors"><i data-lucide="facebook" class="w-5 h-5"></i></a>
+                    <a href="#" class="text-slate-600 hover:text-white transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+
+    <script>
+        // CONFIGURATION OF ALL TOOLS
+        const tools = [
+            { id: 'merge-pdf', title: 'Merge PDF', desc: 'Bir nechta PDF fayllarni bittaga birlashtiring.', icon: 'combine', color: 'text-red-500', active: true, multiple: true, accept: '.pdf', btnText: 'Select PDF files' },
+            { id: 'split-pdf', title: 'Split PDF', desc: 'Bitta PDF faylini alohida sahifalarga bo\'lib yuboring.', icon: 'scissors', color: 'text-orange-500', active: true, multiple: false, accept: '.pdf', btnText: 'Select PDF file' },
+            { id: 'compress-pdf', title: 'Compress PDF', desc: 'PDF fayl hajmini kichraytiring, sifatini maksimal saqlab qolgan holda.', icon: 'minimize', color: 'text-green-500', active: true, multiple: false, accept: '.pdf', btnText: 'Select PDF file' },
+            { id: 'pdf-to-word', title: 'PDF to Word', desc: 'PDF fayllarni tahrirlanadigan DOCX hujjatlariga aylantiring.', icon: 'file-text', color: 'text-blue-500', active: true, multiple: false, accept: '.pdf', btnText: 'Select PDF file' },
+            { id: 'pdf-to-powerpoint', title: 'PDF to PowerPoint', desc: 'PDF fayllarni oson tahrirlanadigan PPTX slaydlariga aylantiring.', icon: 'presentation', color: 'text-orange-500', active: true, multiple: false, accept: '.pdf', btnText: 'Select PDF file' },
+            { id: 'pdf-to-excel', title: 'PDF to Excel', desc: 'PDF dan jadvallarni Excel faylga ko\'chiring.', icon: 'sheet', color: 'text-green-600', active: false },
+            { id: 'word-to-pdf', title: 'Word to PDF', desc: 'Word hujjatlarini PDF formatiga o\'tkazing.', icon: 'file-text', color: 'text-blue-600', active: true, multiple: false, accept: '.docx,.doc', btnText: 'Select Word file' },
+            { id: 'powerpoint-to-pdf', title: 'PowerPoint to PDF', desc: 'PPTX fayllarni oson o\'qiladigan PDF formatiga o\'tkazing.', icon: 'presentation', color: 'text-orange-600', active: true, multiple: false, accept: '.pptx,.ppt', btnText: 'Select PowerPoint file' },
+            { id: 'excel-to-pdf', title: 'Excel to PDF', desc: 'Excel jadvallarini PDF formatiga o\'tkazing.', icon: 'sheet', color: 'text-green-700', active: true, multiple: false, accept: '.xlsx,.xls', btnText: 'Select Excel file' },
+            { id: 'edit-pdf', title: 'Edit PDF', desc: 'PDF ichiga matn, rasm va shakllar qo\'shing.', icon: 'edit', color: 'text-black', active: true, openEditor: true },
+            { id: 'pdf-to-jpg', title: 'PDF to JPG', desc: 'PDF ni sifatli JPG rasmlarga aylantiring yoki rasmlarni ajratib oling.', icon: 'image', color: 'text-yellow-500', active: true, multiple: false, accept: '.pdf', btnText: 'Select PDF file' },
+            { id: 'jpg-to-pdf', title: 'IMG to PDF', desc: 'Rasmlarni (JPG, PNG) soniyalar ichida PDF hujjatiga aylantiring.', icon: 'image', color: 'text-yellow-600', active: true, multiple: true, accept: 'image/jpeg, image/png', btnText: 'Rasmlarni tanlash' },
+
+            { id: 'sign-pdf', title: 'Sign PDF', desc: 'Hujjatlarga onlayn imzo cheking.', icon: 'pen-tool', color: 'text-purple-500', active: false },
+            { id: 'watermark', title: 'Watermark', desc: 'Hujjatingizga o\'z belgingizni (suv belgisi) qo\'ying.', icon: 'droplet', color: 'text-blue-400', active: true, multiple: false, accept: '.pdf', btnText: 'Select PDF file', needsWatermark: true },
+            { id: 'rotate-pdf', title: 'Rotate PDF', desc: 'PDF sahifalarini kerakli tomonga burish.', icon: 'rotate-cw', color: 'text-gray-600', active: true, multiple: false, accept: '.pdf', btnText: 'Select PDF file', needsAngle: true },
+            { id: 'html-to-pdf', title: 'HTML to PDF', desc: 'Veb-sahifalarni to\'g\'ridan-to\'g\'ri PDF ga saqlang.', icon: 'code', color: 'text-blue-500', active: false },
+            { id: 'unlock-pdf', title: 'Unlock PDF', desc: 'PDF parolini olib tashlash va erkinlashtirish.', icon: 'unlock', color: 'text-green-500', active: true, multiple: false, accept: '.pdf', btnText: 'Select PDF file', needsPassword: true },
+            { id: 'protect-pdf', title: 'Protect PDF', desc: 'PDF faylingizni sirli parol bilan qulflab himoyalang.', icon: 'lock', color: 'text-red-500', active: true, multiple: false, accept: '.pdf', btnText: 'Select PDF file', needsPassword: true },
+            { id: 'organize-pdf', title: 'Organize PDF', desc: 'Sahifalarni o\'chirish yoki joyini almashtirish.', icon: 'layout', color: 'text-indigo-500', active: false },
+            { id: 'scan-to-pdf', title: 'Scan to PDF', desc: 'Hujjatni skanerlab PDF ga aylantirish.', icon: 'scan', color: 'text-slate-600', active: false },
+        ];
+
+        let currentActiveTool = null;
+        let selectedFiles = [];
+
+        // Auth Logic & Setup
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('token')) {
+            localStorage.setItem('token', urlParams.get('token'));
+            if (urlParams.get('username')) localStorage.setItem('username', urlParams.get('username'));
+            if (urlParams.get('avatar') && urlParams.get('avatar') !== 'None' && urlParams.get('avatar') !== 'null') {
+                localStorage.setItem('avatar', urlParams.get('avatar'));
+            }
+            window.history.replaceState({}, document.title, "/");
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                document.getElementById('user-info').classList.remove('hidden');
+                document.getElementById('logout-btn').classList.remove('hidden');
+                document.getElementById('login-nav-btn').classList.add('hidden');
+                
+                const username = localStorage.getItem('username') || 'Foydalanuvchi';
+                document.getElementById('nav-username').textContent = username;
+                document.getElementById('greeting').textContent = `Hi ${username}, let's get started`;
+                
+                const avatarUrl = localStorage.getItem('avatar');
+                if (avatarUrl) {
+                    const avatarImg = document.getElementById('nav-avatar');
+                    avatarImg.src = avatarUrl;
+                    avatarImg.classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('greeting').textContent = `UzbekPDF ga xush kelibsiz!`;
+                document.getElementById('login-nav-btn').onclick = () => {
+                    sessionStorage.setItem('next_url', '/');
+                    window.location.href = '/login';
+                };
+            }
+
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('username');
+                window.location.reload();
+            });
+
+            renderGrid();
+            lucide.createIcons();
+            setupDropzone();
+        });
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('tools-grid');
+            grid.innerHTML = '';
+            tools.forEach(tool => {
+                const card = document.createElement('div');
+                card.className = `tool-card bg-white border border-slate-100 rounded-3xl p-8 flex flex-col relative group ${tool.active ? 'hover:border-red-100' : 'tool-card-disabled opacity-60'}`;
+                
+                let badge = '';
+                if (!tool.active) {
+                    badge = `<div class="absolute top-6 right-6 bg-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">Tez kunda</div>`;
+                } else if (tool.openEditor) {
+                    badge = `<div class="absolute top-6 right-6 bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm border border-red-100">Hot</div>`;
+                }
+
+                // Map standard tailwind text-color to bg-color
+                const colorMap = {
+                    'text-red-500': 'bg-red-50 text-red-600',
+                    'text-orange-500': 'bg-orange-50 text-orange-600',
+                    'text-green-500': 'bg-green-50 text-green-600',
+                    'text-blue-500': 'bg-blue-50 text-blue-600',
+                    'text-orange-600': 'bg-orange-100 text-orange-700',
+                    'text-green-600': 'bg-green-100 text-green-700',
+                    'text-blue-600': 'bg-blue-100 text-blue-700',
+                    'text-yellow-500': 'bg-yellow-50 text-yellow-600',
+                    'text-yellow-600': 'bg-yellow-100 text-yellow-700',
+                    'text-purple-500': 'bg-purple-50 text-purple-600',
+                    'text-blue-400': 'bg-blue-50 text-blue-500',
+                    'text-gray-600': 'bg-slate-100 text-slate-600',
+                    'text-red-600': 'bg-red-100 text-red-700',
+                    'text-indigo-500': 'bg-indigo-50 text-indigo-600',
+                    'text-slate-600': 'bg-slate-100 text-slate-700',
+                    'text-black': 'bg-slate-900 text-white'
+                };
+                const iconClass = colorMap[tool.color] || 'bg-slate-50 text-slate-600';
+
+                card.innerHTML = `
+                    ${badge}
+                    <div class="mb-8 w-14 h-14 ${iconClass} rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-sm">
+                        <i data-lucide="${tool.icon}" class="w-7 h-7"></i>
+                    </div>
+                    <h3 class="text-xl font-extrabold text-slate-900 mb-3 tracking-tight">${tool.title}</h3>
+                    <p class="text-sm text-slate-500 font-medium leading-relaxed flex-grow">${tool.desc}</p>
+                    <div class="mt-6 flex items-center text-[#e5322d] text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
+                        Boshlash <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
+                    </div>
+                `;
+
+
+                card.addEventListener('click', () => {
+                    if (!tool.active) {
+                        showToast(`"${tool.title}" funksiyasi ustida ish olib borilmoqda. Tez kunda!`);
+                        return;
+                    }
+                    if (tool.openEditor) {
+                        window.location.href = '/editor';
+                        return;
+                    }
+                    openTool(tool);
+                });
+
+                grid.appendChild(card);
+            });
+        }
+
+        function goHome() {
+            document.getElementById('home-view').classList.remove('hidden');
+            document.getElementById('tool-view').classList.add('hidden');
+            resetFiles();
+        }
+
+        function openTool(tool) {
+            currentActiveTool = tool;
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('tool-view').classList.remove('hidden');
+            
+            document.getElementById('tool-title').textContent = tool.title;
+            document.getElementById('tool-desc').textContent = tool.desc;
+            document.getElementById('btn-text').textContent = tool.btnText;
+            
+            const fileInput = document.getElementById('file-input');
+            fileInput.accept = tool.accept;
+            fileInput.multiple = tool.multiple;
+            
+            if (tool.needsPassword) {
+                document.getElementById('password-container').classList.remove('hidden');
+            } else {
+                document.getElementById('password-container').classList.add('hidden');
+            }
+            
+            if (tool.needsAngle) {
+                document.getElementById('rotate-container').classList.remove('hidden');
+            } else {
+                document.getElementById('rotate-container').classList.add('hidden');
+            }
+            
+            if (tool.needsWatermark) {
+                document.getElementById('watermark-container').classList.remove('hidden');
+            } else {
+                document.getElementById('watermark-container').classList.add('hidden');
+            }
+            
+            resetFiles();
+        }
+
+        // Dropzone Logic
+        function setupDropzone() {
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('file-input');
+            const browseBtn = document.getElementById('browse-btn');
+
+            browseBtn.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
+            
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzone.classList.add('dropzone-active');
+            });
+            dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dropzone-active'));
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dropzone-active');
+                handleFiles(e.dataTransfer.files);
+            });
+            fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+        }
+
+        function handleFiles(files) {
+            if (!files || files.length === 0) return;
+            selectedFiles = Array.from(files);
+            if (!currentActiveTool.multiple) {
+                selectedFiles = [selectedFiles[0]]; // force single file
+            }
+            
+            document.getElementById('upload-content').classList.add('hidden');
+            document.getElementById('file-preview').classList.remove('hidden');
+            
+            let fileNames = selectedFiles.map(f => f.name).join(', ');
+            if (fileNames.length > 40) fileNames = fileNames.substring(0, 37) + '...';
+            document.getElementById('selected-files-text').textContent = `${selectedFiles.length} fayl: ${fileNames}`;
+        }
+
+        function resetFiles(e) {
+            if(e) e.stopPropagation();
+            selectedFiles = [];
+            document.getElementById('file-input').value = '';
+            document.getElementById('upload-content').classList.remove('hidden');
+            document.getElementById('file-preview').classList.add('hidden');
+            document.getElementById('progress-state').classList.add('hidden');
+            document.getElementById('pdf-password').value = '';
+        }
+
+        document.getElementById('action-btn').addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (selectedFiles.length === 0) return;
+            
+            if (currentActiveTool.needsPassword && !document.getElementById('pdf-password').value) {
+                showToast("Iltimos, parol kiriting!");
+                return;
+            }
+            
+            if (currentActiveTool.needsWatermark && !document.getElementById('pdf-watermark-text').value) {
+                showToast("Iltimos, watermark matnini kiriting!");
+                return;
+            }
+
+            // Show Progress
+            document.getElementById('file-preview').classList.add('hidden');
+            document.getElementById('progress-state').classList.remove('hidden');
+            
+            try {
+                if (currentActiveTool.id === 'jpg-to-pdf') {
+                    await convertImagesToPdfLocal(selectedFiles);
+                } else if (currentActiveTool.id === 'pdf-to-powerpoint') {
+                    await convertPdfToPptxLocal(selectedFiles[0]);
+                } else {
+                    await callBackendApi();
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Xatolik yuz berdi: " + err.message);
+                resetFiles();
+            }
+        });
+
+        // Backend API Caller
+        async function callBackendApi() {
+            const formData = new FormData();
+            
+            if (currentActiveTool.multiple) {
+                selectedFiles.forEach(f => formData.append('files', f));
+            } else {
+                formData.append('file', selectedFiles[0]);
+            }
+
+            if (currentActiveTool.needsPassword) {
+                formData.append('password', document.getElementById('pdf-password').value);
+            }
+            
+            if (currentActiveTool.needsAngle) {
+                formData.append('angle', document.getElementById('pdf-angle').value);
+            }
+            
+            if (currentActiveTool.needsWatermark) {
+                formData.append('watermark_text', document.getElementById('pdf-watermark-text').value);
+            }
+
+            let endpoint = '';
+            switch(currentActiveTool.id) {
+                case 'merge-pdf': endpoint = '/api/convert/merge-pdf'; break;
+                case 'split-pdf': endpoint = '/api/convert/split-pdf'; break;
+                case 'pdf-to-word': endpoint = '/api/convert/pdf-to-docx'; break;
+                case 'pdf-to-jpg': endpoint = '/api/convert/pdf-to-jpg'; break;
+                case 'protect-pdf': endpoint = '/api/convert/protect-pdf'; break;
+                case 'compress-pdf': endpoint = '/api/convert/compress-pdf'; break;
+                case 'unlock-pdf': endpoint = '/api/convert/unlock-pdf'; break;
+                case 'rotate-pdf': endpoint = '/api/convert/rotate-pdf'; break;
+                case 'word-to-pdf': 
+                case 'powerpoint-to-pdf':
+                case 'excel-to-pdf': 
+                    endpoint = '/api/convert/office-to-pdf'; break;
+                case 'watermark': endpoint = '/api/convert/watermark'; break;
+            }
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                sessionStorage.setItem('next_url', '/');
+                alert("Natijani yuklab olish uchun tizimga kirishingiz kerak!");
+                window.location.href = '/login';
+                throw new Error("Tizimga kirish talab etiladi");
+            }
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                if (response.status === 401) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('username');
+                    sessionStorage.setItem('next_url', '/');
+                    alert("Sessiya vaqti tugagan, iltimos qayta kiring!");
+                    window.location.href = '/login';
+                    throw new Error("Sessiya tugagan");
+                }
+                throw new Error(data.detail || "Server xatosi");
+            }
+
+            // Download file
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            const contentDisposition = response.headers.get('Content-Disposition');
+            
+            let ext = '.pdf';
+            if (currentActiveTool.id === 'pdf-to-word') ext = '.docx';
+            else if (currentActiveTool.id === 'split-pdf' || currentActiveTool.id === 'pdf-to-jpg') ext = '.zip';
+            
+            let filename = `uzbekpdf_${currentActiveTool.id}_result${ext}`;
+            
+            if (contentDisposition) {
+                const match = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (match && match[1]) filename = match[1];
+            }
+            
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            
+            showToast("Muvaffaqiyatli yakunlandi!");
+            setTimeout(goHome, 2000);
+        }
+
+        // ==========================================
+        // CLIENT SIDE LOCAL LOGIC (Preserved)
+        // ==========================================
+        
+        async function convertImagesToPdfLocal(files) {
+            document.getElementById('progress-status').textContent = 'Rasmlar taxlanmoqda...';
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const imgData = await readFileAsDataURL(file);
+                
+                if (i > 0) pdf.addPage();
+                
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+            }
+            
+            pdf.save("uzbekpdf_images.pdf");
+            showToast("Muvaffaqiyatli saqlandi!");
+            setTimeout(goHome, 2000);
+        }
+
+        async function convertPdfToPptxLocal(file) {
+            document.getElementById('progress-status').textContent = 'PDF o\'qilmoqda... (Brauzerda)';
+            const fileUrl = URL.createObjectURL(file);
+            const pdfDocument = await pdfjsLib.getDocument(fileUrl).promise;
+            
+            const pres = new PptxGenJS();
+            
+            for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+                document.getElementById('progress-status').textContent = `Slayd ${pageNum}/${pdfDocument.numPages}`;
+                const page = await pdfDocument.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 1.5 }); // High quality
+                
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+                
+                const imgData = canvas.toDataURL('image/jpeg', 0.8);
+                const slide = pres.addSlide();
+                slide.addImage({ data: imgData, x: 0, y: 0, w: '100%', h: '100%' });
+            }
+            
+            document.getElementById('progress-status').textContent = 'PPTX saqlanmoqda...';
+            await pres.writeFile({ fileName: `uzbekpdf_presentation.pptx` });
+            URL.revokeObjectURL(fileUrl);
+            
+            showToast("Muvaffaqiyatli saqlandi!");
+            setTimeout(goHome, 2000);
+        }
+
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                reader.readAsDataURL(file);
+            });
+        }
+    </script>
+</body>
+</html>

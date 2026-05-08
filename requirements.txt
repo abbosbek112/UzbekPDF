@@ -1,0 +1,15 @@
+fastapi==0.111.0
+uvicorn==0.29.0
+python-multipart==0.0.9
+pdf2docx==0.5.8
+sqlalchemy
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+httpx==0.27.0
+pypdf==5.0.0
+pdf2image==1.17.0
+reportlab==4.1.0
+openpyxl==3.1.2
+Pillow
+python-dotenv==1.0.1
+gunicorn==21.2.0

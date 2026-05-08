@@ -1,0 +1,14 @@
+[Unit]
+Description=Gunicorn instance to serve UzbekPDF
+After=network.target
+
+[Service]
+User=abbos
+Group=www-data
+WorkingDirectory=/home/abbos/UzbekPDF
+Environment="PATH=/home/abbos/UzbekPDF/venv/bin"
+EnvironmentFile=/home/abbos/UzbekPDF/.env
+ExecStart=/home/abbos/UzbekPDF/venv/bin/gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker -b 127.0.0.1:8000
+
+[Install]
+WantedBy=multi-user.target
