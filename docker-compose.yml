@@ -20,8 +20,19 @@ services:
       # Baza va vaqtinchalik fayllar konteyner yangilanganda yo'qolmasin
       - dbdata:/app/data
       - temp:/app/temp
+    # Caddy shu konteynerga umumiy `web` tarmog'i orqali, `uzbekpdf` nomi
+    # bilan murojaat qiladi.
+    #
+    # Ilgari u `host.docker.internal:8100` ga borardi va bu ishlamadi:
+    # `127.0.0.1` ga bog'langan port hostning loopback'ida qoladi, konteyner
+    # ichidan esa ko'rinmaydi.
     ports:
-      - "127.0.0.1:8100:8000"
+      - "127.0.0.1:8100:8000"   # faqat serverning o'zidan sinash uchun
+    networks:
+      default:
+      web:
+        aliases:
+          - uzbekpdf
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/')\""]
       interval: 30s
@@ -32,3 +43,11 @@ services:
 volumes:
   dbdata:
   temp:
+
+networks:
+  # QRdasturxon'dagi Caddy ham shu tarmoqqa ulanadi — ikki compose loyihasi
+  # bir-birini nomi bilan topishi uchun yagona yo'l. Tarmoq tashqarida
+  # yasaladi, ya'ni bu loyihani to'xtatish uni o'chirib yubormaydi:
+  #     docker network create web
+  web:
+    external: true
