@@ -174,9 +174,18 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     )
     return {"access_token": access_token, "token_type": "bearer", "username": user.username}
 
-GOOGLE_CLIENT_ID = "113272182746-3vplonk6u4m6ejqf0j44hb8gslis33rl.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET = "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"
-GOOGLE_REDIRECT_URI = "https://uzbekpdf.uz/api/auth/google/callback"
+# Kalitlar `.env` dan olinadi va repoga tushmaydi. Ilgari ular shu yerda
+# ochiq yozilgan edi — ya'ni repoga kirgan har kim Google hisobingiz nomidan
+# so'rov yubora olardi. Eski kalit bekor qilinishi kerak, yangisini
+# almashtirish esa endi kodga tegmasdan bo'ladi.
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+
+# Manzil ham sozlamada: lokalda sinaganda `http://localhost:8000` bo'ladi.
+# Qotirib qo'yilsa Google kirgan odamni prod saytiga qaytarib yuborardi va
+# lokalda kirishni umuman sinab bo'lmasdi.
+BASE_URL = os.environ.get("BASE_URL", "https://uzbekpdf.uz").rstrip("/")
+GOOGLE_REDIRECT_URI = f"{BASE_URL}/api/auth/google/callback"
 
 
 @app.get("/api/user/me")

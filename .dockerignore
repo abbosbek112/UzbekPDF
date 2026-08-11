@@ -1,0 +1,12 @@
+.git
+.gitignore
+venv/
+__pycache__/
+*.pyc
+.env
+uzbekpdf.db
+temp/
+temp_uploads/
+nginx_uzbekpdf
+uzbekpdf.service
+README.md

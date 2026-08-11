@@ -1,7 +1,12 @@
+import os
+
 from sqlalchemy import create_engine, Column, Integer, String, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./uzbekpdf.db"
+# Baza joyi sozlanadigan bo'ldi. Konteynerda u volume ichida (`/app/data`)
+# yashaydi — aks holda har yangilanishda ro'yxatdan o'tgan foydalanuvchilar
+# image bilan birga yo'q bo'lib ketardi. Lokalda esa avvalgidek yonida.
+SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./uzbekpdf.db")
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
