@@ -206,8 +206,29 @@ async def get_me(request: Request, db: Session = Depends(database.get_db), user:
         "usage_count": usage.count if usage else 0
     }
 
+@app.get("/api/auth/google/login")
 def google_login():
-    google_auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?client_id={GOOGLE_CLIENT_ID}&redirect_uri={GOOGLE_REDIRECT_URI}&response_type=code&scope=openid email profile"
+    """Google bilan kirishni boshlaydi.
+
+    Bu funksiyada `@app.get` belgisi umuman yo'q edi — ya'ni u oddiy
+    funksiya bo'lib qolgan va manzil 404 qaytargan. Kirish tugmasi
+    bosilganda hech narsa bo'lmasligining sababi shu edi.
+    """
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        # Kalit sozlanmagan bo'lsa Google'ga bo'sh `client_id` bilan
+        # yuborishning ma'nosi yo'q: u tushunarsiz xato sahifasini
+        # ko'rsatadi. Sababni o'zimiz aytamiz.
+        raise HTTPException(
+            status_code=503,
+            detail="Google bilan kirish hozircha sozlanmagan",
+        )
+
+    google_auth_url = (
+        "https://accounts.google.com/o/oauth2/v2/auth"
+        f"?client_id={GOOGLE_CLIENT_ID}"
+        f"&redirect_uri={GOOGLE_REDIRECT_URI}"
+        "&response_type=code&scope=openid email profile"
+    )
     return RedirectResponse(google_auth_url)
 
 async def get_admin_user(user: database.User = Depends(auth.get_current_user)):
@@ -250,7 +271,14 @@ async def toggle_user_premium(user_id: int, data: dict, db: Session = Depends(da
     db.commit()
     return {"message": "Muvaffaqiyatli o'zgartirildi"}
 
+@app.get("/api/auth/google/callback")
 async def google_callback(code: str, db: Session = Depends(database.get_db)):
+    """Google shu manzilga qaytaradi. Bunda ham `@app.get` yo'q edi.
+
+    Google Cloud Console'dagi "Authorized redirect URIs" ro'yxatida aynan
+    shu manzil turishi kerak:
+        https://uzbekpdf.uz/api/auth/google/callback
+    """
     token_url = "https://oauth2.googleapis.com/token"
     data = {
         "code": code,
