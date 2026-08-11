@@ -906,6 +906,25 @@ async def root():
     except FileNotFoundError:
         return HTMLResponse(content="<h1>index.html topilmadi</h1>")
 
+@app.get("/login")
+async def login_page():
+    """Kirish sahifasi.
+
+    `login.html` fayli bor edi, lekin unga marshrut yozilmagan — ya'ni
+    sahifa umuman ochilmasdi. Barcha sahifalar esa foydalanuvchini aynan
+    `/login` ga yuboradi (`index.html`, `editor.html`, `profile.html`,
+    `premium.html`, `admin.html`), demak kirish butun saytda ishlamasdi.
+
+    Ro'yxatdan o'tish ham shu sahifada: forma `/api/register` ga yuboradi,
+    shuning uchun alohida `/register` marshruti kerak emas.
+    """
+    try:
+        with open("login.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except FileNotFoundError:
+        return HTMLResponse(content="<h1>login.html topilmadi</h1>")
+
+
 @app.get("/profile")
 async def profile_page():
     try:
