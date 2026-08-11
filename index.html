@@ -258,26 +258,25 @@
                 <div>
                     <h4 class="text-white font-bold text-sm uppercase tracking-widest mb-6">Mahsulot</h4>
                     <ul class="space-y-4 text-sm font-medium text-slate-500">
-                        <li><a href="#" class="hover:text-white transition-colors">Barcha asboblar</a></li>
+                        <li><a href="/" class="hover:text-white transition-colors">Barcha asboblar</a></li>
                         <li><a href="/premium" class="hover:text-white transition-colors text-red-500 font-bold">Premium</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Narxlar</a></li>
+                        <li><a href="/premium" class="hover:text-white transition-colors">Narxlar</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="text-white font-bold text-sm uppercase tracking-widest mb-6">Yordam</h4>
                     <ul class="space-y-4 text-sm font-medium text-slate-500">
-                        <li><a href="#" class="hover:text-white transition-colors">Biz haqimizda</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Bog'lanish</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Maxfiylik</a></li>
-                    </ul>
+                        <li><a href="/about" class="hover:text-white transition-colors">Biz haqimizda</a></li>
+                        <li><a href="/contact" class="hover:text-white transition-colors">Bog'lanish</a></li>
+                                            </ul>
                 </div>
             </div>
             <div class="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center">
                 <p class="text-slate-600 text-xs font-bold uppercase tracking-widest mb-4 md:mb-0">&copy; 2026 UzbekPDF. BARCHA HUQUQLAR HIMOYALANGAN.</p>
                 <div class="flex space-x-6">
-                    <a href="#" class="text-slate-600 hover:text-white transition-colors"><i data-lucide="instagram" class="w-5 h-5"></i></a>
-                    <a href="#" class="text-slate-600 hover:text-white transition-colors"><i data-lucide="facebook" class="w-5 h-5"></i></a>
-                    <a href="#" class="text-slate-600 hover:text-white transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
+                    <span class="text-slate-600 hover:text-white transition-colors"><i data-lucide="instagram" class="w-5 h-5"></i></span>
+                    <span class="text-slate-600 hover:text-white transition-colors"><i data-lucide="facebook" class="w-5 h-5"></i></span>
+                    <span class="text-slate-600 hover:text-white transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></span>
                 </div>
             </div>
         </div>
@@ -358,6 +357,31 @@
             renderGrid();
             lucide.createIcons();
             setupDropzone();
+
+            // Manzilda asbob nomi bo'lsa (havola ulashilgan yoki sahifa
+            // yangilangan) o'sha asbob ochiladi. Tarixga yozilmaydi —
+            // hozirgi yozuvning o'zi shu holat.
+            const boshlangich = tools.find(
+                t => t.active && !t.openEditor && '#' + t.id === location.hash
+            );
+            if (boshlangich) {
+                openTool(boshlangich, true);
+                history.replaceState({ tool: boshlangich.id }, '', location.hash);
+            } else {
+                history.replaceState({ tool: null }, '', location.pathname);
+            }
+        });
+
+        // "Orqaga" va "Oldinga" tugmalari. Holatni tarixdan o'qib tiklaymiz;
+        // `true` — bu chaqiruv tarixdan kelgani, ya'ni yangi yozuv qo'shilmaydi.
+        window.addEventListener('popstate', event => {
+            const id = event.state && event.state.tool;
+            const tool = id && tools.find(t => t.id === id);
+            if (tool) {
+                openTool(tool, true);
+            } else {
+                goHome(true);
+            }
         });
 
         function showToast(msg) {
@@ -431,16 +455,32 @@
             });
         }
 
-        function goHome() {
+        // Asbob ochilganda brauzer tarixiga yozib qo'yamiz.
+        //
+        // Busiz butun sayt bitta tarix yozuvi bo'lib qolardi: asbobni ochib
+        // "Orqaga" bosgan odam bosh sahifaga emas, saytdan butunlay chiqib
+        // ketardi. Manzilda ham nima ochiqligi ko'rinmasdi.
+        //
+        // `fromHistory` — "Orqaga"/"Oldinga" bosilganda chaqirilgani belgisi:
+        // bunday paytda tarixga yana yozish kerak emas, aks holda yozuvlar
+        // ko'payib, orqaga qaytish uchun bir necha marta bosishga to'g'ri
+        // kelardi.
+        function goHome(fromHistory) {
             document.getElementById('home-view').classList.remove('hidden');
             document.getElementById('tool-view').classList.add('hidden');
             resetFiles();
+            if (!fromHistory) {
+                history.pushState({ tool: null }, '', location.pathname);
+            }
         }
 
-        function openTool(tool) {
+        function openTool(tool, fromHistory) {
             currentActiveTool = tool;
             document.getElementById('home-view').classList.add('hidden');
             document.getElementById('tool-view').classList.remove('hidden');
+            if (!fromHistory) {
+                history.pushState({ tool: tool.id }, '', '#' + tool.id);
+            }
             
             document.getElementById('tool-title').textContent = tool.title;
             document.getElementById('tool-desc').textContent = tool.desc;
