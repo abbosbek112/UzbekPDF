@@ -11,7 +11,9 @@ from fastapi import Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
-from typing import List
+# `Optional` 73- va 92-qatorlarda ishlatiladi, lekin import qilinmagan edi —
+# shu sababdan modul umuman yuklanmasdi va ilova ishga tushmasdi.
+from typing import List, Optional
 from pypdf import PdfWriter, PdfReader, PageObject
 from pdf2image import convert_from_path
 import zipfile
