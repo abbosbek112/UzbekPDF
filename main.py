@@ -331,11 +331,226 @@ async def google_callback(code: str, db: Session = Depends(database.get_db)):
     
     return RedirectResponse(url=f"/?token={jwt_token}&username={db_user.username}&avatar={picture}")
 
+
+# --- PDF → Word: "faqat matn" rejimi --------------------------------------
+#
+# `pdf2docx` sahifani jadval va bo'limlarga bo'lib qayta quradi. Bir ustunli
+# oddiy hujjatda bu yaxshi natija beradi, lekin ikki ustunli va rangli fon
+# to'rtburchagi bor dizaynda (masalan rezyume) u yo'q jadvalni "topib" oladi:
+# matn bir-birining ustiga tushadi va mazmun qirqiladi.
+#
+# Bu yerdagi yo'l dizaynni umuman takrorlamaydi. Maqsad boshqa: matn to'liq,
+# tartibli va Word'da bemalol tahrirlanadigan bo'lsin. Word'ga o'giradigan
+# odam odatda aynan shuni xohlaydi.
+
+BULLET_BELGILARI = ("•", "▪", "‣", "·", "–", "—", "-", "*")
+
+# "Ko'rinishni saqlash" rejimi uchun `pdf2docx` sozlamalari.
+#
+# Standart holatda kutubxona hech qanday chizig'i bo'lmagan joyda ham bo'sh
+# joyga qarab jadval "topib" oladi (`parse_stream_table`). Ikki ustunli
+# rezyumeda u katak o'lchamlarini noto'g'ri hisoblaydi: matn ustma-ust
+# tushadi va mazmun qirqiladi. Aynan shu buzilish kuzatilgan.
+#
+# Qiymatlar haqiqiy hujjatda o'lchab tanlangan — o'zgartirishdan oldin
+# qaytadan o'lchang.
+PDF2DOCX_SOZLAMALARI = {
+    # Bo'sh joyga qarab jadval yasashni to'xtatadi
+    "parse_stream_table": False,
+    # Chiziqlari bor haqiqiy jadvallar saqlanadi
+    "parse_lattice_table": True,
+    # Hoshiyani qirqmaymiz: standart 0.5 matnni sahifa chetiga surib,
+    # uzun qatorlarni sig'maydigan qilib qo'yardi
+    "page_margin_factor_top": 0.0,
+    "page_margin_factor_bottom": 0.0,
+    # Bitta sahifadagi xato butun konvertatsiyani to'xtatmasin
+    "ignore_page_error": True,
+}
+
+
+def _sahifa_ustunlari(bloklar, sahifa_kengligi):
+    """Sahifa ikki ustunlimi? Ha bo'lsa (chap, o'ng) qaytaradi.
+
+    Ustun chegarasi matn umuman tushmagan vertikal yo'lak bo'yicha topiladi.
+    Ikki ustunli rezyumeda yon panel va asosiy qism aralashib ketmasligi
+    uchun shu kerak — aks holda matn qatorma-qator sakrab o'qib bo'lmas
+    holga kelardi.
+    """
+    if len(bloklar) < 4:
+        return None
+
+    KATAK = 100
+    band = [False] * KATAK
+    for blok in bloklar:
+        x0, _, x1, _ = blok["bbox"]
+        boshi = max(0, int(x0 / sahifa_kengligi * KATAK))
+        oxiri = min(KATAK - 1, int(x1 / sahifa_kengligi * KATAK))
+        for i in range(boshi, oxiri + 1):
+            band[i] = True
+
+    # Eng keng bo'sh yo'lak. Faqat sahifaning o'rta qismida qidiriladi:
+    # chetdagi bo'sh joy hoshiya, u ustun chegarasi emas.
+    eng_yaxshi = None
+    i = int(KATAK * 0.2)
+    while i < int(KATAK * 0.8):
+        if band[i]:
+            i += 1
+            continue
+        j = i
+        while j < int(KATAK * 0.8) and not band[j]:
+            j += 1
+        if eng_yaxshi is None or (j - i) > (eng_yaxshi[1] - eng_yaxshi[0]):
+            eng_yaxshi = (i, j)
+        i = j
+
+    # Tor tirqish oddiy so'z oralig'i bo'lishi mumkin — ustun deb qabul
+    # qilmaymiz, aks holda bir ustunli hujjat ham ikkiga bo'linib ketardi.
+    if not eng_yaxshi or (eng_yaxshi[1] - eng_yaxshi[0]) < KATAK * 0.04:
+        return None
+
+    chegara = (eng_yaxshi[0] + eng_yaxshi[1]) / 2 / KATAK * sahifa_kengligi
+    chap = [b for b in bloklar if (b["bbox"][0] + b["bbox"][2]) / 2 < chegara]
+    ong = [b for b in bloklar if (b["bbox"][0] + b["bbox"][2]) / 2 >= chegara]
+
+    # Bir tomonda deyarli hech narsa bo'lmasa bu ustun emas, tasodif
+    if len(chap) < 2 or len(ong) < 2:
+        return None
+    return chap, ong
+
+
+def _asosiy_shrift(hujjat):
+    """Hujjatdagi eng ko'p ishlatilgan shrift o'lchami — "oddiy matn" o'lchami.
+
+    Sarlavhani shundan kattaligi bilan ajratamiz. Qat'iy son (masalan 14pt)
+    yozib qo'yib bo'lmaydi: har hujjat o'z o'lchamida yoziladi.
+    """
+    hisob = {}
+    for sahifa in hujjat:
+        for blok in sahifa.get_text("dict")["blocks"]:
+            if blok.get("type") != 0:
+                continue
+            for qator in blok["lines"]:
+                for bolak in qator["spans"]:
+                    olcham = round(bolak["size"] * 2) / 2
+                    hisob[olcham] = hisob.get(olcham, 0) + len(bolak["text"].strip())
+    if not hisob:
+        return 11.0
+    return max(hisob.items(), key=lambda juft: juft[1])[0]
+
+
+def _pdf_dan_toza_docx(pdf_yoli, docx_yoli):
+    """PDF matnini toza Word hujjatiga yozadi. Xatboshilar sonini qaytaradi.
+
+    0 qaytsa — hujjatda matn yo'q (skanerlangan rasm). Chaqiruvchi buni
+    tushunarli xabarga aylantiradi, chunki bo'sh fayl bergandan ko'ra
+    sababini aytish yaxshiroq.
+    """
+    import pymupdf
+    from docx import Document
+    from docx.shared import Pt
+
+    hujjat = pymupdf.open(pdf_yoli)
+    asosiy = _asosiy_shrift(hujjat)
+    word = Document()
+    yozilgan = 0
+
+    for sahifa in hujjat:
+        bloklar = [b for b in sahifa.get_text("dict")["blocks"] if b.get("type") == 0]
+        if not bloklar:
+            continue
+
+        ustunlar = _sahifa_ustunlari(bloklar, sahifa.rect.width)
+        if ustunlar:
+            # Avval chap ustun to'liq, keyin o'ng — rezyumedagi tabiiy tartib
+            tartib = sorted(ustunlar[0], key=lambda b: b["bbox"][1]) + \
+                     sorted(ustunlar[1], key=lambda b: b["bbox"][1])
+        else:
+            tartib = sorted(bloklar, key=lambda b: b["bbox"][1])
+
+        for blok in tartib:
+            blok_ongi = blok["bbox"][2]
+            yigilgan, yigilgan_qalin, yigilgan_olcham = "", True, 0.0
+
+            # Blok oqar matnmi yoki ro'yxatmi?
+            #
+            # Oqar matnda qator sahifa chetiga yetib o'raladi, ya'ni keyingi
+            # qator bilan bitta xatboshi. Ro'yxatda esa har qator alohida
+            # fikr: "O'zbek — Ona tili" va "Ingliz — B1-B2" qo'shilib
+            # ketmasligi kerak.
+            #
+            # Faqat qatorning o'ng cheti bo'yicha ajratib bo'lmaydi: blokdagi
+            # eng uzun qator har doim chetga yetadi va "o'ralgan" bo'lib
+            # ko'rinadi. Shuning uchun qator UZUNLIGIGA qaraymiz — ro'yxat
+            # bandlari qisqa bo'ladi.
+            uzunliklar = [
+                len("".join(b["text"] for b in q["spans"]).strip())
+                for q in blok["lines"]
+            ]
+            uzunliklar = [u for u in uzunliklar if u]
+            oqar_matn = len(uzunliklar) >= 2 and (
+                sorted(uzunliklar)[len(uzunliklar) // 2] >= 45
+            )
+
+            def chiqar(matn, qalin, olcham):
+                nonlocal yozilgan
+                matn = matn.strip()
+                if not matn:
+                    return
+                uslub = None
+                belgili = matn[:1] in BULLET_BELGILARI and len(matn) > 2
+                if belgili:
+                    matn = matn[1:].strip()
+                    uslub = "List Bullet"
+                elif olcham >= asosiy * 1.45:
+                    uslub = "Heading 1"
+                elif olcham >= asosiy * 1.15 or (qalin and olcham >= asosiy):
+                    uslub = "Heading 2"
+
+                xatboshi = word.add_paragraph(style=uslub) if uslub else word.add_paragraph()
+                yugurish = xatboshi.add_run(matn)
+                if uslub is None:
+                    yugurish.bold = qalin
+                    yugurish.font.size = Pt(olcham)
+                yozilgan += 1
+
+            for qator in blok["lines"]:
+                matn = "".join(bolak["text"] for bolak in qator["spans"])
+                if not matn.strip():
+                    continue
+                olcham = max((b["size"] for b in qator["spans"]), default=asosiy)
+                # PyMuPDF bayroqlari: 2**4 — qalin
+                qalin = all(b["flags"] & 16 for b in qator["spans"])
+
+                if yigilgan:
+                    yigilgan += " " + matn.strip()
+                    yigilgan_qalin = yigilgan_qalin and qalin
+                    yigilgan_olcham = max(yigilgan_olcham, olcham)
+                else:
+                    yigilgan, yigilgan_qalin, yigilgan_olcham = matn.strip(), qalin, olcham
+
+                # Oqar matnda qator chetga yetgan bo'lsa — o'ralgan, keyingisi
+                # bilan qo'shiladi. Ro'yxatda esa har qator o'zicha qoladi.
+                oralgan = oqar_matn and qator["bbox"][2] >= blok_ongi - max(
+                    2.0, (blok_ongi - blok["bbox"][0]) * 0.03
+                )
+                if not oralgan:
+                    chiqar(yigilgan, yigilgan_qalin, yigilgan_olcham)
+                    yigilgan, yigilgan_qalin, yigilgan_olcham = "", True, 0.0
+
+            chiqar(yigilgan, yigilgan_qalin, yigilgan_olcham)
+
+    hujjat.close()
+    if yozilgan:
+        word.save(docx_yoli)
+    return yozilgan
+
+
 @app.post("/api/convert/pdf-to-docx")
 async def convert_pdf_to_docx(
     request: Request,
     background_tasks: BackgroundTasks, 
     file: UploadFile = File(...),
+    mode: str = Form("text"),
     db: Session = Depends(database.get_db),
     user = Depends(get_optional_user)
 ):
@@ -357,11 +572,23 @@ async def convert_pdf_to_docx(
         with open(pdf_path, "wb") as buffer:
             buffer.write(await file.read())
 
-
-        # Convert to DOCX
-        cv = Converter(pdf_path)
-        cv.convert(docx_path)
-        cv.close()
+        if mode == "layout":
+            # Ko'rinishni saqlashga urinish. Sozlamalar ataylab berilgan:
+            # standart holatda `pdf2docx` bo'sh joyga qarab jadval "ixtiro
+            # qiladi" va ikki ustunli dizaynda katak o'lchamini noto'g'ri
+            # hisoblab, matnni qirqib qo'yadi.
+            cv = Converter(pdf_path)
+            cv.convert(docx_path, **PDF2DOCX_SOZLAMALARI)
+            cv.close()
+        else:
+            # Standart yo'l: toza, tahrirlanadigan matn. Hech qachon
+            # buzilmaydi, chunki dizaynni takrorlashga urinmaydi.
+            if _pdf_dan_toza_docx(pdf_path, docx_path) == 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Bu PDF ichida matn yo'q — u skanerlangan rasmdan iborat. "
+                           "Uni Word'ga aylantirib bo'lmaydi.",
+                )
 
         # Check if the file was created successfully
         if not os.path.exists(docx_path):
@@ -380,6 +607,12 @@ async def convert_pdf_to_docx(
             filename="converted.docx",
             media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         )
+
+    except HTTPException:
+        # Sababi ma'lum bo'lgan xato (masalan skanerlangan PDF) o'z holicha
+        # o'tsin — uni 500 ga aylantirsak foydalanuvchi sababni bilmay qolardi.
+        cleanup_files(pdf_path, docx_path)
+        raise
 
     except Exception as e:
         # If error occurs, clean up immediately

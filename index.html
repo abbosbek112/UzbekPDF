@@ -193,6 +193,25 @@
                     <input type="password" id="pdf-password" placeholder="••••••••" class="w-full px-6 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-[#e5322d] outline-none font-bold text-lg shadow-sm transition-all">
                 </div>
 
+                <!-- Conversion mode (Only for PDF to Word) -->
+                <div id="mode-container" class="hidden w-full max-w-sm mt-8 p-8 bg-slate-50 rounded-3xl border border-slate-100 text-left">
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Qanday aylantirilsin?</label>
+                    <label class="flex items-start gap-3 p-4 bg-white border-2 border-slate-100 rounded-2xl cursor-pointer mb-3 has-[:checked]:border-[#e5322d]">
+                        <input type="radio" name="convert-mode" value="text" checked class="mt-1 accent-[#e5322d]">
+                        <span>
+                            <span class="block font-bold text-slate-700">Faqat matn</span>
+                            <span class="block text-xs text-slate-500 mt-1">Word'da bemalol tahrirlanadi. Ranglar va ustunlar saqlanmaydi.</span>
+                        </span>
+                    </label>
+                    <label class="flex items-start gap-3 p-4 bg-white border-2 border-slate-100 rounded-2xl cursor-pointer has-[:checked]:border-[#e5322d]">
+                        <input type="radio" name="convert-mode" value="layout" class="mt-1 accent-[#e5322d]">
+                        <span>
+                            <span class="block font-bold text-slate-700">Ko'rinishini saqlash</span>
+                            <span class="block text-xs text-slate-500 mt-1">Joylashuvni takrorlashga urinadi. Murakkab dizaynda chalkashishi mumkin.</span>
+                        </span>
+                    </label>
+                </div>
+
                 <!-- Rotation Select (Only for Rotate PDF) -->
                 <div id="rotate-container" class="hidden w-full max-w-sm mt-8 p-8 bg-slate-50 rounded-3xl border border-slate-100 text-left">
                     <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Burish burchagi</label>
@@ -289,7 +308,7 @@
             { id: 'merge-pdf', title: 'Merge PDF', desc: 'Bir nechta PDF fayllarni bittaga birlashtiring.', icon: 'combine', color: 'text-red-500', active: true, multiple: true, accept: '.pdf', btnText: 'Select PDF files' },
             { id: 'split-pdf', title: 'Split PDF', desc: 'Bitta PDF faylini alohida sahifalarga bo\'lib yuboring.', icon: 'scissors', color: 'text-orange-500', active: true, multiple: false, accept: '.pdf', btnText: 'Select PDF file' },
             { id: 'compress-pdf', title: 'Compress PDF', desc: 'PDF fayl hajmini kichraytiring, sifatini maksimal saqlab qolgan holda.', icon: 'minimize', color: 'text-green-500', active: true, multiple: false, accept: '.pdf', btnText: 'Select PDF file' },
-            { id: 'pdf-to-word', title: 'PDF to Word', desc: 'PDF fayllarni tahrirlanadigan DOCX hujjatlariga aylantiring.', icon: 'file-text', color: 'text-blue-500', active: true, multiple: false, accept: '.pdf', btnText: 'Select PDF file' },
+            { id: 'pdf-to-word', title: 'PDF to Word', desc: 'PDF fayllarni tahrirlanadigan DOCX hujjatlariga aylantiring.', icon: 'file-text', color: 'text-blue-500', active: true, multiple: false, accept: '.pdf', btnText: 'Select PDF file', needsMode: true },
             { id: 'pdf-to-powerpoint', title: 'PDF to PowerPoint', desc: 'PDF fayllarni oson tahrirlanadigan PPTX slaydlariga aylantiring.', icon: 'presentation', color: 'text-orange-500', active: true, multiple: false, accept: '.pdf', btnText: 'Select PDF file' },
             { id: 'pdf-to-excel', title: 'PDF to Excel', desc: 'PDF dan jadvallarni Excel faylga ko\'chiring.', icon: 'sheet', color: 'text-green-600', active: false },
             { id: 'word-to-pdf', title: 'Word to PDF', desc: 'Word hujjatlarini PDF formatiga o\'tkazing.', icon: 'file-text', color: 'text-blue-600', active: true, multiple: false, accept: '.docx,.doc', btnText: 'Select Word file' },
@@ -507,6 +526,12 @@
             } else {
                 document.getElementById('watermark-container').classList.add('hidden');
             }
+
+            if (tool.needsMode) {
+                document.getElementById('mode-container').classList.remove('hidden');
+            } else {
+                document.getElementById('mode-container').classList.add('hidden');
+            }
             
             resetFiles();
         }
@@ -610,6 +635,11 @@
             
             if (currentActiveTool.needsWatermark) {
                 formData.append('watermark_text', document.getElementById('pdf-watermark-text').value);
+            }
+
+            if (currentActiveTool.needsMode) {
+                const tanlangan = document.querySelector('input[name="convert-mode"]:checked');
+                formData.append('mode', tanlangan ? tanlangan.value : 'text');
             }
 
             let endpoint = '';
