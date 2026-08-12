@@ -1194,20 +1194,26 @@ async def profile_page():
     except FileNotFoundError:
         return HTMLResponse(content="<h1>profile.html topilmadi</h1>")
 
-@app.get("/admin")
-async def admin_page():
-    try:
-        with open("admin.html", "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    except FileNotFoundError:
-        return HTMLResponse(content="<h1>admin.html topilmadi</h1>")
-
-async def login_page():
-    try:
-        with open("login.html", "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    except FileNotFoundError:
-        return HTMLResponse(content="<h1>login.html topilmadi</h1>")
+# Admin paneli hozircha yopiq.
+#
+# Ikki sabab bilan olib tashlandi:
+#   * bazada birorta ham admin yo'q (`is_admin`), ya'ni panel hech kimga
+#     ochilmaydi va faqat bo'sh raqamlar ko'rsatadi;
+#   * sahifa parolsiz berilardi — ma'lumot chiqmasa ham (API `get_admin_user`
+#     bilan himoyalangan), begona odam admin panelining o'zini ko'ra olardi.
+#
+# `admin.html` va `/api/admin/*` marshrutlari joyida qoldi. Qaytarish uchun:
+#   1. o'z hisobingizga admin huquqini bering:
+#         UPDATE users SET is_admin = 1 WHERE email = '...';
+#   2. quyidagi marshrutni tiklang;
+#   3. `admin.html` ga tekshiruv qo'shing: kirmagan yoki admin bo'lmagan
+#      odamni `/login` ga qaytarsin — hozir u shunchaki bo'sh sahifa
+#      ko'rsatadi.
+#
+# @app.get("/admin")
+# async def admin_page():
+#     with open("admin.html", "r", encoding="utf-8") as f:
+#         return HTMLResponse(content=f.read())
 
 
 from datetime import datetime
